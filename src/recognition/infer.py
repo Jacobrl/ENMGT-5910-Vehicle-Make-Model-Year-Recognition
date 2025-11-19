@@ -4,6 +4,8 @@ from torchvision import models, transforms, datasets
 from torchvision.models import ResNet50_Weights
 from pathlib import Path
 from PIL import Image
+from .parser import parse_top1_prediction
+
 
 def load_model(weights_path: str, num_classes: int):
     """Loads fine-tuned ResNet-50 model with trained weights."""
@@ -43,6 +45,44 @@ def predict(model, image_tensor, class_names):
     ]
     return results
 
+def get_car_info(image_path: str):
+    """
+    Pipeline function. NO input(), NO prints.
+    Returns:
+    {
+      "brand": ...,
+      "model": ...,
+      "year": ...,
+      "confidence": ...
+    }
+    """
+
+    # Locate model + classes
+    base_dir = Path(__file__).resolve().parents[2]
+    data_dir = base_dir / "data" / "car_recognition" / "dataset"
+    model_path = base_dir / "resnet50_car_recognition_best.pth"
+
+    # Load dataset classes
+    dataset = datasets.ImageFolder(data_dir)
+    class_names = dataset.classes
+    num_classes = len(class_names)
+
+    # Load model
+    model = load_model(str(model_path), num_classes)
+
+    # Run prediction
+    image_tensor = preprocess_image(image_path)
+    predictions = predict(model, image_tensor, class_names)
+
+    # Build textual output for parser
+    output_text = "Top Predictions:\n"
+    for i, p in enumerate(predictions, 1):
+        output_text += f"{i}. {p['label']} — {p['probability']*100:.2f}%\n"
+
+    # Parse with parser.py
+    car_info = parse_top1_prediction(output_text)
+
+    return car_info
 
 if __name__ == "__main__":
 
