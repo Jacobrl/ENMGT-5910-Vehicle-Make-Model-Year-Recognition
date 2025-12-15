@@ -85,7 +85,6 @@ if __name__ == "__main__":
         else:
             param.requires_grad = False
     model.fc = nn.Linear(model.fc.in_features, num_classes)
-
     # DataLoader performance options
     pin = torch.cuda.is_available()  # True if CUDA, False otherwise (MPS ignores)
     print(f"pin_memory: {pin}")
